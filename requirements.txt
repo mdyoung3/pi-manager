@@ -1,0 +1,132 @@
+ ### ✅ Overview
+
+I want you to build an mobile first app (but also desktop) that's basically a form. Please build the main form in pages/Manager.vue and the page with the table in pages/UrlList.vue This app is a Pi-hole URL Manager. Users can submit a URL via the form, which is:
+
+1. Saved in a SQLite database.
+2. Used to trigger the **Pi-hole API** on another system to temporarily disable DNS blocking for 5 minutes.
+
+There is also a separate view where users can see all submitted URLs and delete them.
+
+---
+
+### ✅ Page 1: Form Page
+
+**Layout:**
+
+* A **title** at the top of the page
+* A **set of instructions** directly below the title
+* A **URL input field** (accepts long URLs)
+* A **Submit button**
+
+**Functionality:**
+
+* When the submit button is clicked:
+
+  1. Validate the input, and make sure it is not empty (ensure it’s a proper URL)
+  2. Save the URL to the database
+  3. Call the **Pi-hole API** on another system with:
+
+     ```
+     http://<pi-hole-address>/admin/api.php?disable=300&auth=<token>
+     ```
+
+---
+
+### ✅ Page 2: URL List Page
+
+**Layout:**
+
+* A table that lists all URLs from the database
+* Each row has:
+
+  * The URL
+  * A **trash icon** (button)
+
+**Functionality:**
+
+* Clicking the trash icon should:
+
+  1. Delete the URL from the database
+  2. Remove it from the frontend table without reloading the page
+
+---
+
+### ✅ Backend Notes (Laravel 12)
+
+* Use **SQLite** database with a simple table:
+
+  ```php
+  Schema::create('pihole_urls', function (Blueprint $table) {
+      $table->id();
+      $table->string('url');
+      $table->timestamps();
+  });
+  ```
+
+* Backend routes (API preferred):
+
+  * `POST /api/pihole/submit` — save URL and trigger Pi-hole
+  * `GET /api/pihole/urls` — return all URLs as JSON
+  * `DELETE /api/pihole/url/{id}` — delete URL
+
+* Consider using Laravel’s `Http` client for the Pi-hole call:
+
+  ```php
+  Http::get('http://pi.hole/admin/api.php', [
+      'disable' => 300,
+      'auth' => config('pihole.api_token')
+  ]);
+  ```
+
+---
+
+### ✅ Frontend Notes (Vue.js 3, Options API)
+
+* Use the Options API (`data`, `methods`, `mounted`, etc.)
+
+* Create components:
+
+  * `PiholeForm.vue` — contains the form and submission logic
+  * `UrlList.vue` — shows the table and handles deletion
+
+* Use `axios` for API communication
+
+* Show feedback/loading/error states as needed
+
+---
+
+### ✅ Tech Stack
+
+* Laravel 12
+* Vue 3 (Options API)
+* Vite for build
+* SQLite for database
+* Tailwind for styling
+* Pi-hole API for DNS disabling
+
+---
+
+### ✅ Security Considerations
+
+* Input validation (both client-side and server-side)
+* CSRF protection
+* Securely store and use the Pi-hole token
+
+---
+
+**Deliverables:**
+
+* Backend:
+
+  * Migration
+  * Controller methods
+  * Routes
+* Frontend:
+
+  * Vue component for form
+  * Vue component for table
+* Integration:
+
+  * Axios setup
+  * Basic error handling
+  * Styling with Tailwind (basic, not fancy)
