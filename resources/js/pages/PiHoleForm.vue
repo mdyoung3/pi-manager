@@ -8,6 +8,6 @@ import PiholeForm from '../components/PiholeForm.vue';
         <link rel="preconnect" href="https://rsms.me/" />
         <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
     </Head>
-    
+
     <PiholeForm />
 </template>

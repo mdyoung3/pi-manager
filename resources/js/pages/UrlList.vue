@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
+import DragDropUrlZone from '../components/DragDropUrlZone.vue';
 import UrlListComponent from '../components/UrlList.vue';
 </script>
 
@@ -8,6 +9,11 @@ import UrlListComponent from '../components/UrlList.vue';
         <link rel="preconnect" href="https://rsms.me/" />
         <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
     </Head>
-    
-    <UrlListComponent />
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="mx-auto max-w-6xl">
+            <DragDropUrlZone />
+            <UrlListComponent />
+        </div>
+    </div>
 </template>

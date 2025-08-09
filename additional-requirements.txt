@@ -1,0 +1,31 @@
+Additional Requirements for Laravel 12 App with Vue.js 3 Frontend
+
+Please help implement the following features in a Laravel 12 application that uses Vue.js 3 on the frontend:
+
+    New Drag-and-Drop URL Area on urllist Page
+
+        Add a new Vue.js component to the urllist page.
+
+        This component should allow users to drag and drop URLs into a defined section of the DOM (a visual drop zone).
+
+        Once a URL is dropped into this area, it should be captured and stored (persisted).
+
+    Database Storage
+
+        Create a new database table (e.g., blocked_urls or disallowed_urls) to store these dropped URLs.
+
+        Each entry should at least have: id, url, created_at, and updated_at.
+
+    Validation on Home Page Submit
+
+        On the home page, when a user submits a URL (existing form submission flow), the backend should:
+
+            Check if the submitted URL exists in the newly created blocked_urls table.
+
+            If a match is found, return a validation response or message indicating “This URL is not permitted.”
+
+            Prevent the submission from proceeding.
+
+Please use the Vue Options API with regular JavaScript, not the Composition API or TypeScript.
+
+Let me know if you need the existing context or want this integrated into the current app structure.

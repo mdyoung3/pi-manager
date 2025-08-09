@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PiholeUrl;
+use App\Models\BlockedUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Http;
@@ -25,6 +26,14 @@ class PiholeController extends Controller
 
         try {
             $url = $request->input('url');
+            
+            // Check if URL is blocked
+            $isBlocked = BlockedUrl::where('url', $url)->exists();
+            if ($isBlocked) {
+                return response()->json([
+                    'message' => 'This URL is not permitted.'
+                ], 422);
+            }
             
             PiholeUrl::create(['url' => $url]);
 
@@ -90,6 +99,81 @@ class PiholeController extends Controller
             
             return response()->json([
                 'message' => 'Failed to delete URL'
+            ], 500);
+        }
+    }
+
+    public function storeBlockedUrl(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'url' => 'required|url|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $url = $request->input('url');
+            
+            // Check if URL is already blocked
+            $existingBlocked = BlockedUrl::where('url', $url)->first();
+            if ($existingBlocked) {
+                return response()->json([
+                    'message' => 'URL is already blocked'
+                ], 422);
+            }
+            
+            BlockedUrl::create(['url' => $url]);
+
+            return response()->json([
+                'message' => 'URL blocked successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error blocking URL', ['error' => $e->getMessage()]);
+            
+            return response()->json([
+                'message' => 'An error occurred while blocking the URL'
+            ], 500);
+        }
+    }
+
+    public function getBlockedUrls(): JsonResponse
+    {
+        try {
+            $urls = BlockedUrl::orderBy('created_at', 'desc')->get();
+            
+            return response()->json([
+                'data' => $urls
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Error fetching blocked URLs', ['error' => $e->getMessage()]);
+            
+            return response()->json([
+                'message' => 'Failed to fetch blocked URLs'
+            ], 500);
+        }
+    }
+
+    public function destroyBlockedUrl(BlockedUrl $blockedUrl): JsonResponse
+    {
+        try {
+            $blockedUrl->delete();
+            
+            return response()->json([
+                'message' => 'Blocked URL removed successfully'
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Error removing blocked URL', ['error' => $e->getMessage()]);
+            
+            return response()->json([
+                'message' => 'Failed to remove blocked URL'
             ], 500);
         }
     }
