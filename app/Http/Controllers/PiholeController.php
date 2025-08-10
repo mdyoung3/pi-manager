@@ -7,13 +7,14 @@ use App\Models\BlockedUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class PiholeController extends Controller
 {
     protected $piholeAddress;
+
     protected $piholeSid;
-    protected $password;
 
     public function __construct(PiholeUrl $piholeAddress)
     {
@@ -21,11 +22,11 @@ class PiholeController extends Controller
         $this->piholeSid = $this->getPiholeSid();
     }
 
-    private function getPiholeSid(): string {
+    private function getPiholeSid(): mixed {
         $sessionData = session('pihole_sid');
 
         if($sessionData) {
-            self::testSide();
+            self::testSid();
             if(time() - $sessionData['created_at'] > 1800) {
                 return self::storeSid();
             } else {
@@ -38,7 +39,26 @@ class PiholeController extends Controller
 
     private function testSid()
     {
+        try {
+            $response = Http::withoutVerifying()->withHeaders([
+                "Content-Type" => "application/json"
+            ])->withBody(json_encode([
+                'sid' => $this->piholeSid,
+            ]))->post("https://{$this->piholeAddress}/api/history");
 
+            if ($response->successful()) {
+                $responseData = $response->json();
+                if (isset($responseData['error']) && $responseData['error']['key'] === 'unauthorized') {
+                    throw new \Exception('Unauthorized access. Please check your API Key');
+                }
+            } else {
+                throw new \Exception('HTTP request failed');
+            }
+
+        } catch (\Exception $e) {
+            // Log the error message, you can also return the exception message
+            Log::error($e->getMessage());
+        }
     }
     function getNewPiholeSid(): string {
         $piholeSid = self::getSid();
