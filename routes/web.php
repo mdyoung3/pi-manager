@@ -13,10 +13,11 @@ Route::get('/urllist', function () {
 });
 
 Route::prefix('api')->group(function () {
-    Route::post('/pihole/temporary-disable', [PiholeController::class, 'submit']);
+    Route::post('/pihole/temporary-disable', [PiholeController::class, 'disablePihole']);
+    Route::post('/pihole/add-url', [PiholeController::class, 'submit']);
     Route::get('/urls', [PiholeController::class, 'index']);
     Route::delete('/urls/{url}', [PiholeController::class, 'destroy']);
-    
+
     // Blocked URLs endpoints
     Route::post('/blocked-urls', [PiholeController::class, 'storeBlockedUrl']);
     Route::get('/blocked-urls', [PiholeController::class, 'getBlockedUrls']);

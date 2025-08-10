@@ -14,27 +14,28 @@
                     </ul>
                 </div>
 
-                <form @submit.prevent="submitForm" class="rounded-lg bg-white p-6 shadow-md">
-                    <div class="mb-6">
-                        <label for="url" class="mb-2 block text-sm font-medium text-gray-700"> URL to Allow </label>
-                        <input
-                            id="url"
-                            v-model="formData.url"
-                            type="text"
-                            placeholder="https://example.com"
-                            class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                            :class="{ 'border-red-500': errors.url }"
-                        />
-                        <p v-if="errors.url" class="mt-1 text-sm text-red-600">
-                            {{ errors.url }}
-                        </p>
-                    </div>
+                <div  class="rounded-lg bg-white p-6 shadow-md">
+                    <form @submit.prevent="submitForm" class="">
+                        <div class="mb-6">
+                            <label for="url" class="mb-2 block text-sm font-medium text-gray-700"> URL to Allow </label>
+                            <input
+                                id="url"
+                                v-model="formData.url"
+                                type="text"
+                                placeholder="https://example.com"
+                                class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                :class="{ 'border-red-500': errors.url }"
+                            />
+                            <p v-if="errors.url" class="mt-1 text-sm text-red-600">
+                                {{ errors.url }}
+                            </p>
+                        </div>
 
-                    <button
-                        type="submit"
-                        :disabled="isLoading"
-                        class="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                    >
+                        <button
+                            type="submit"
+                            :disabled="isLoading"
+                            class="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                        >
                         <span v-if="isLoading" class="flex items-center justify-center">
                             <svg
                                 class="mr-3 -ml-1 h-5 w-5 animate-spin text-white"
@@ -51,9 +52,37 @@
                             </svg>
                             Processing...
                         </span>
-                        <span v-else>Temporarily Disable Pi-hole</span>
-                    </button>
-                </form>
+                            <span v-else>Add URL to be removed from deny list on Pihole</span>
+                        </button>
+                    </form>
+                    <form @submit.prevent="disablePi" class="">
+                        <button
+                            type="submit"
+                            :disabled="isLoading"
+                            class="mt-4 w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                        <span v-if="isLoading" class="flex items-center justify-center">
+                            <svg
+                                class="mr-3 -ml-1 h-5 w-5 animate-spin text-white"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                            >
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path
+                                    class="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                ></path>
+                            </svg>
+                            Processing...
+                        </span>
+                            <span v-else>Disable pihole for five minutes</span>
+                        </button>
+                    </form>
+                </div>
+
+
 
                 <div v-if="successMessage" class="mt-4 rounded-md border border-green-200 bg-green-50 p-4">
                     <div class="flex">
@@ -120,6 +149,7 @@ export default defineComponent({
             isLoading: false,
             successMessage: '',
             errorMessage: '',
+            showConfirmationPopup: false,
         };
     },
     methods: {
@@ -136,8 +166,7 @@ export default defineComponent({
             this.errors = {};
 
             if (!this.formData.url.trim()) {
-                this.errors.url = 'URL is required';
-                return false;
+                return true;
             }
 
             if (!this.validateUrl(this.formData.url)) {
@@ -159,11 +188,36 @@ export default defineComponent({
             this.isLoading = true;
 
             try {
+                const response = await axios.post('/pihole/add-url', {
+                    url: this.formData.url,
+                });
+
+                this.successMessage = response.data.message || 'URL has been stored.';
+                this.formData.url = '';
+            } catch (error: any) {
+                console.error('Error:', error);
+                this.errorMessage = error.response?.data?.message || 'An error occurred while processing your request.';
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        async disablePi(): Promise<void> {
+            this.successMessage = '';
+            this.errorMessage = '';
+
+            if (!this.validateForm()) {
+                return;
+            }
+
+            this.isLoading = true;
+
+            try {
                 const response = await axios.post('/api/pihole/temporary-disable', {
                     url: this.formData.url,
                 });
 
-                this.successMessage = response.data.message || 'Pi-hole temporarily disabled successfully! URL has been stored.';
+                this.successMessage = response.data.message || 'Pi-hole temporarily disabled successfully!';
                 this.formData.url = '';
             } catch (error: any) {
                 console.error('Error:', error);

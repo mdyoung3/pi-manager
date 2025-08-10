@@ -11,6 +11,82 @@ use Illuminate\Support\Facades\Validator;
 
 class PiholeController extends Controller
 {
+    protected $piholeAddress;
+    protected $piholeSid;
+    protected $password;
+
+    public function __construct(PiholeUrl $piholeAddress)
+    {
+        $this->piholeAddress = config('pihole.address', 'pi.hole');
+        $this->piholeSid = $this->getPiholeSid();
+    }
+
+    private function getPiholeSid(): string {
+        $sessionData = session('pihole_sid');
+
+        if($sessionData) {
+            self::testSide();
+            if(time() - $sessionData['created_at'] > 1800) {
+                return self::storeSid();
+            } else {
+                return $sessionData['sid'];
+            }
+        } else {
+            return self::getNewPiholeSid();
+        }
+    }
+
+    private function testSid()
+    {
+
+    }
+    function getNewPiholeSid(): string {
+        $piholeSid = self::getSid();
+        $created_at = time(); // Get current Unix timestamp
+        $sessionData = ['sid' => $piholeSid, 'created_at' => $created_at];
+
+        // Storing it in session
+        session(['pihole_sid' => $sessionData]);
+
+        return $sessionData['sid'];
+    }
+
+    private function getSid(): string
+    {
+        $piholePassword = config('pihole.password');
+
+        $response = Http::withoutVerifying()->withHeaders([
+            "Content-Type" => "application/json"
+        ])->withBody(json_encode([
+            'disable' => 300,
+            'password' => $piholePassword]), 'application/json'
+        )->post("https://{$this->piholeAddress}/api/auth");
+
+        return $response->json()['session']['sid'];
+    }
+
+    private function storeSid()
+    {
+        $response = self::getSid();
+        $sessionData = $response->json();
+        $piholeSid = $sessionData['session']['sid'];
+        $creationTime = time(); // Get current Unix timestamp
+        session(['pihole_sid' => [ 'sid' => $piholeSid, 'created_at' => $creationTime]]);
+        return $piholeSid;
+    }
+
+    public function disablePihole() {
+        $blocker = Http::withoutVerifying()->withHeaders([
+            "Content-Type" => "application/json"
+        ])->withBody(json_encode([
+                'blocking' => false,
+                'timer' => 360,
+                'sid' => $this->piholeSid,])
+        )->post("https://{$this->piholeAddress}/api/dns/blocking");
+
+        return $blocker->json([$blocker]);
+    }
+
     public function submit(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -26,7 +102,7 @@ class PiholeController extends Controller
 
         try {
             $url = $request->input('url');
-            
+
             // Check if URL is blocked
             $isBlocked = BlockedUrl::where('url', $url)->exists();
             if ($isBlocked) {
@@ -34,25 +110,8 @@ class PiholeController extends Controller
                     'message' => 'This URL is not permitted.'
                 ], 422);
             }
-            
+
             PiholeUrl::create(['url' => $url]);
-
-            $piholeAddress = config('pihole.address', 'pi.hole');
-            $piholeToken = config('pihole.api_token');
-
-            if ($piholeToken) {
-                $response = Http::timeout(10)->get("http://{$piholeAddress}/admin/api.php", [
-                    'disable' => 300,
-                    'auth' => $piholeToken
-                ]);
-
-                if (!$response->successful()) {
-                    \Log::warning('Pi-hole API call failed', [
-                        'status' => $response->status(),
-                        'body' => $response->body()
-                    ]);
-                }
-            }
 
             return response()->json([
                 'message' => 'URL saved and Pi-hole temporarily disabled for 5 minutes'
@@ -60,7 +119,7 @@ class PiholeController extends Controller
 
         } catch (\Exception $e) {
             \Log::error('Error in pihole submit', ['error' => $e->getMessage()]);
-            
+
             return response()->json([
                 'message' => 'An error occurred while processing your request'
             ], 500);
@@ -71,14 +130,14 @@ class PiholeController extends Controller
     {
         try {
             $urls = PiholeUrl::orderBy('created_at', 'desc')->get();
-            
+
             return response()->json([
                 'data' => $urls
             ]);
-            
+
         } catch (\Exception $e) {
             \Log::error('Error fetching URLs', ['error' => $e->getMessage()]);
-            
+
             return response()->json([
                 'message' => 'Failed to fetch URLs'
             ], 500);
@@ -89,14 +148,14 @@ class PiholeController extends Controller
     {
         try {
             $url->delete();
-            
+
             return response()->json([
                 'message' => 'URL deleted successfully'
             ]);
-            
+
         } catch (\Exception $e) {
             \Log::error('Error deleting URL', ['error' => $e->getMessage()]);
-            
+
             return response()->json([
                 'message' => 'Failed to delete URL'
             ], 500);
@@ -118,7 +177,7 @@ class PiholeController extends Controller
 
         try {
             $url = $request->input('url');
-            
+
             // Check if URL is already blocked
             $existingBlocked = BlockedUrl::where('url', $url)->first();
             if ($existingBlocked) {
@@ -126,7 +185,7 @@ class PiholeController extends Controller
                     'message' => 'URL is already blocked'
                 ], 422);
             }
-            
+
             BlockedUrl::create(['url' => $url]);
 
             return response()->json([
@@ -135,7 +194,7 @@ class PiholeController extends Controller
 
         } catch (\Exception $e) {
             \Log::error('Error blocking URL', ['error' => $e->getMessage()]);
-            
+
             return response()->json([
                 'message' => 'An error occurred while blocking the URL'
             ], 500);
@@ -146,14 +205,14 @@ class PiholeController extends Controller
     {
         try {
             $urls = BlockedUrl::orderBy('created_at', 'desc')->get();
-            
+
             return response()->json([
                 'data' => $urls
             ]);
-            
+
         } catch (\Exception $e) {
             \Log::error('Error fetching blocked URLs', ['error' => $e->getMessage()]);
-            
+
             return response()->json([
                 'message' => 'Failed to fetch blocked URLs'
             ], 500);
@@ -164,17 +223,31 @@ class PiholeController extends Controller
     {
         try {
             $blockedUrl->delete();
-            
+
             return response()->json([
                 'message' => 'Blocked URL removed successfully'
             ]);
-            
+
         } catch (\Exception $e) {
             \Log::error('Error removing blocked URL', ['error' => $e->getMessage()]);
-            
+
             return response()->json([
                 'message' => 'Failed to remove blocked URL'
             ], 500);
         }
     }
+
+    private function sendUrlToPihole(): JsonResponse {
+        $piholeSid = self::getPiholeSid();
+
+        $blocker = Http::withoutVerifying()->withHeaders([
+            "Content-Type" => "application/json"
+        ])->withBody(json_encode([
+                'domain' => "example.com",
+                'sid' => $piholeSid,])
+        )->post("https://{$this->piholeAddress}/api/domains/allow/regex");
+
+        return $blocker->json();
+    }
+
 }
