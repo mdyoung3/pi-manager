@@ -2,31 +2,31 @@
     <div class="pihole-manager">
         <div class="container mx-auto px-4 py-8">
             <div class="mx-auto max-w-2xl">
-                <h1 class="mb-4 text-3xl font-bold text-gray-800">Pi-hole Temporary Disable Manager</h1>
+                <h1 class="mb-4 text-3xl font-bold neon-red neon-text">☠️ PIHOLE BYPASSER☠️</h1>
 
-                <div class="mb-6 border-l-4 border-blue-400 bg-blue-50 p-4">
-                    <h2 class="mb-2 text-lg font-semibold text-blue-800">Instructions:</h2>
-                    <ul class="space-y-1 text-blue-700">
-                        <li>• Enter a valid URL that you want to temporarily allow through Pi-hole</li>
-                        <li>• The system will disable Pi-hole for 5 minutes to allow access</li>
-                        <li>• URLs will be stored for future reference</li>
-                        <li>• You can manage stored URLs in the URL History page</li>
+                <div class="mb-6 apocalypse-alert p-4 rounded-md">
+                    <h2 class="mb-2 text-lg font-semibold neon-red">INSTRUCTIONS:</h2>
+                    <ul class="space-y-1 neon-green">
+                        <li>☣️ Enter URL being blocked</li>
+                        <li>🧟 Emergency protocol: Disable firewall for 6 minutes during zombie breach</li>
+                        <li>📡 All transmissions logged for post-apocalypse analysis</li>
+                        <li>🔍 Access survivor network logs in the Communication Archive</li>
                     </ul>
                 </div>
 
-                <div  class="rounded-lg bg-white p-6 shadow-md">
+                <div class="rounded-lg zombie-card p-6 shadow-md">
                     <form @submit.prevent="submitForm" class="">
                         <div class="mb-6">
-                            <label for="url" class="mb-2 block text-sm font-medium text-gray-700"> URL to Allow </label>
+                            <label for="url" class="mb-2 block text-md font-medium neon-green">Enter URL that's preventing access here:</label>
                             <input
                                 id="url"
                                 v-model="formData.url"
                                 type="text"
-                                placeholder="https://example.com"
-                                class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                :class="{ 'border-red-500': errors.url }"
+                                placeholder="https://survivor-network.com"
+                                class="w-full rounded-md zombie-input px-3 py-2 shadow-sm focus:outline-none"
+                                :class="{ 'border-red-500 shadow-red-500/50': errors.url }"
                             />
-                            <p v-if="errors.url" class="mt-1 text-sm text-red-600">
+                            <p v-if="errors.url" class="mt-1 text-sm neon-red">
                                 {{ errors.url }}
                             </p>
                         </div>
@@ -34,7 +34,7 @@
                         <button
                             type="submit"
                             :disabled="isLoading"
-                            class="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                            class="w-full rounded-md zombie-button px-4 py-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                         >
                         <span v-if="isLoading" class="flex items-center justify-center">
                             <svg
@@ -52,74 +52,52 @@
                             </svg>
                             Processing...
                         </span>
-                            <span v-else>Add URL to be removed from deny list on Pihole</span>
+                            <span v-else>SUBMIT URL</span>
                         </button>
                     </form>
-                    <form @submit.prevent="disablePi" class="">
-                        <button
-                            type="submit"
-                            :disabled="isLoading"
-                            class="mt-4 w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                        <span v-if="isLoading" class="flex items-center justify-center">
-                            <svg
-                                class="mr-3 -ml-1 h-5 w-5 animate-spin text-white"
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
+                    <div class="mt-6 text-center">
+                        <p class="mb-4 text-sm neon-red font-medium">⚠️ EMERGENCY ZOMBIE BREACH PROTOCOL ⚠️</p>
+                        <form @submit.prevent="disablePi" class="flex justify-center">
+                            <button
+                                type="submit"
+                                :disabled="isLoading"
+                                class="skull-button focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 flex items-center justify-center"
+                                title="Disable firewall for 5 minutes during zombie breach"
                             >
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path
-                                    class="opacity-75"
-                                    fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                ></path>
-                            </svg>
-                            Processing...
-                        </span>
-                            <span v-else>Disable pihole for five minutes</span>
-                        </button>
-                    </form>
+                                <span v-if="isLoading" class="skull-icon animate-spin">⚙️</span>
+                                <span v-else class="skull-icon">☠️</span>
+                            </button>
+                        </form>
+                        <p class="mt-2 text-xs neon-green">EMERGENCY BREACH PROTOCOL</p>
+                    </div>
                 </div>
 
 
 
-                <div v-if="successMessage" class="mt-4 rounded-md border border-green-200 bg-green-50 p-4">
+                <div v-if="successMessage" class="mt-4 rounded-md survivor-success p-4">
                     <div class="flex">
                         <div class="flex-shrink-0">
-                            <svg class="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                <path
-                                    fill-rule="evenodd"
-                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                    clip-rule="evenodd"
-                                />
-                            </svg>
+                            <span class="text-2xl neon-green">✅</span>
                         </div>
                         <div class="ml-3">
-                            <p class="text-sm text-green-700">{{ successMessage }}</p>
+                            <p class="text-sm neon-green font-medium">🎯 {{ successMessage }}</p>
                         </div>
                     </div>
                 </div>
 
-                <div v-if="errorMessage" class="mt-4 rounded-md border border-red-200 bg-red-50 p-4">
+                <div v-if="errorMessage" class="mt-4 rounded-md apocalypse-alert p-4">
                     <div class="flex">
                         <div class="flex-shrink-0">
-                            <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                <path
-                                    fill-rule="evenodd"
-                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                                    clip-rule="evenodd"
-                                />
-                            </svg>
+                            <span class="text-2xl neon-red">💀</span>
                         </div>
                         <div class="ml-3">
-                            <p class="text-sm text-red-700">{{ errorMessage }}</p>
+                            <p class="text-sm neon-red font-medium">🚨 {{ errorMessage }}</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="mt-6 text-center">
-                    <a href="/urllist" class="text-blue-600 underline hover:text-blue-800"> View URL History </a>
+                    <a href="/urllist" class="neon-green hover:neon-red transition-colors duration-300 underline">📡 View Communication Archive</a>
                 </div>
             </div>
         </div>

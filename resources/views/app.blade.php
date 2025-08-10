@@ -19,14 +19,22 @@
             })();
         </script>
 
-        {{-- Inline style to set the HTML background color based on our theme in app.css --}}
+        {{-- Inline style to set the HTML background color based on our zombie apocalypse theme --}}
         <style>
             html {
-                background-color: oklch(1 0 0);
+                background-color: #0a0a0a;
+                background-image: 
+                    radial-gradient(circle at 20% 30%, rgba(255, 0, 0, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 70%, rgba(0, 255, 0, 0.05) 0%, transparent 50%),
+                    linear-gradient(135deg, rgba(0, 0, 0, 0.9) 0%, rgba(10, 0, 0, 0.95) 100%);
             }
 
             html.dark {
-                background-color: oklch(0.145 0 0);
+                background-color: #0a0a0a;
+                background-image: 
+                    radial-gradient(circle at 20% 30%, rgba(255, 0, 0, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 70%, rgba(0, 255, 0, 0.05) 0%, transparent 50%),
+                    linear-gradient(135deg, rgba(0, 0, 0, 0.9) 0%, rgba(10, 0, 0, 0.95) 100%);
             }
         </style>
 
