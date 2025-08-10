@@ -18,41 +18,10 @@ class PiholeController extends Controller
     public function __construct(PiholeUrl $piholeAddress)
     {
         $this->piholeAddress = config('pihole.address', 'pi.hole');
-        $this->piholeSid = $this->getPiholeSid();
+        $this->piholeSid = $this->getNewPiholeSid();
     }
 
-    private function getPiholeSid(): string {
-        $sessionData = session('pihole_sid');
-
-        if($sessionData) {
-            self::testSide();
-            if(time() - $sessionData['created_at'] > 1800) {
-                return self::storeSid();
-            } else {
-                return $sessionData['sid'];
-            }
-        } else {
-            return self::getNewPiholeSid();
-        }
-    }
-
-    private function testSid()
-    {
-
-    }
     function getNewPiholeSid(): string {
-        $piholeSid = self::getSid();
-        $created_at = time(); // Get current Unix timestamp
-        $sessionData = ['sid' => $piholeSid, 'created_at' => $created_at];
-
-        // Storing it in session
-        session(['pihole_sid' => $sessionData]);
-
-        return $sessionData['sid'];
-    }
-
-    private function getSid(): string
-    {
         $piholePassword = config('pihole.password');
 
         $response = Http::withoutVerifying()->withHeaders([
@@ -65,18 +34,8 @@ class PiholeController extends Controller
         return $response->json()['session']['sid'];
     }
 
-    private function storeSid()
-    {
-        $response = self::getSid();
-        $sessionData = $response->json();
-        $piholeSid = $sessionData['session']['sid'];
-        $creationTime = time(); // Get current Unix timestamp
-        session(['pihole_sid' => [ 'sid' => $piholeSid, 'created_at' => $creationTime]]);
-        return $piholeSid;
-    }
-
     public function disablePihole() {
-        $blocker = Http::withoutVerifying()->withHeaders([
+        $response = Http::withoutVerifying()->withHeaders([
             "Content-Type" => "application/json"
         ])->withBody(json_encode([
                 'blocking' => false,
@@ -84,7 +43,12 @@ class PiholeController extends Controller
                 'sid' => $this->piholeSid,])
         )->post("https://{$this->piholeAddress}/api/dns/blocking");
 
-        return $blocker->json([$blocker]);
+        $responseData = $response->json();
+        if (isset($responseData['blocking']) && $responseData['blocking'] === 'disabled') {
+            return $response->json()['blocking'];
+        } else {
+            throw new \Exception('Blocking is not Disabled');
+        }
     }
 
     public function submit(Request $request): JsonResponse
