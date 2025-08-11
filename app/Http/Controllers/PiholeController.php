@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\PiholeUrl;
 use App\Models\BlockedUrl;
+use App\Models\DisabledTracked;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Http;
@@ -35,6 +36,8 @@ class PiholeController extends Controller
     }
 
     public function disablePihole() {
+        DisabledTracked::create([]);
+        
         $response = Http::withoutVerifying()->withHeaders([
             "Content-Type" => "application/json"
         ])->withBody(json_encode([
@@ -45,6 +48,7 @@ class PiholeController extends Controller
 
         $responseData = $response->json();
         if (isset($responseData['blocking']) && $responseData['blocking'] === 'disabled') {
+
             return $response->json()['blocking'];
         } else {
             throw new \Exception('Blocking is not Disabled');
