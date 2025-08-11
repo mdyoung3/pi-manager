@@ -7,6 +7,7 @@ use App\Models\BlockedUrl;
 use App\Models\DisabledTracked;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 
@@ -14,7 +15,6 @@ class PiholeController extends Controller
 {
     protected $piholeAddress;
     protected $piholeSid;
-    protected $password;
 
     public function __construct(PiholeUrl $piholeAddress)
     {
@@ -35,9 +35,10 @@ class PiholeController extends Controller
         return $response->json()['session']['sid'];
     }
 
-    public function disablePihole() {
-        DisabledTracked::create([]);
-        
+    public function disablePihole(Request $request) {
+//        self::sessionAndClickTracker($request);
+//        DisabledTracked::create([]);
+
         $response = Http::withoutVerifying()->withHeaders([
             "Content-Type" => "application/json"
         ])->withBody(json_encode([
@@ -53,6 +54,18 @@ class PiholeController extends Controller
         } else {
             throw new \Exception('Blocking is not Disabled');
         }
+    }
+
+    private function sessionAndClickTracker($request) {
+        $sessionId = $request->session()->getId();
+        $key = "clicks:{$sessionId}";
+        $clicksCount = Cache::get($key, 0);
+
+        if ($clicksCount >= 2) {
+            return response()->json(['error' => 'You cannot click more than twice in an hour'], 429); // 429 is Too Many Requests HTTP Status Code
+        }
+
+        Cache::put($key, $clicksCount + 1, 10*60);
     }
 
     public function submit(Request $request): JsonResponse

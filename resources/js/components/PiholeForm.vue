@@ -14,7 +14,31 @@
                     </ul>
                 </div>
 
-                <div class="rounded-lg zombie-card p-6 shadow-md">
+                <div class="rounded-lg zombie-card p-6 shadow-md mb-6">
+                    <div v-if="successMessage" class="mt-4 rounded-md survivor-success p-4 mb-6">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <span class="text-2xl neon-green">✅</span>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm neon-green font-medium">🎯 {{ successMessage }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-if="errorMessage" class="mt-4 rounded-md apocalypse-alert p-4 mb-6">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <span class="text-2xl neon-red">💀</span>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm neon-red font-medium">🚨 {{ errorMessage }}</p>
+                            </div>
+                            <button @click="closeError" class="ml-auto cursor-pointer">
+                                <span class="text-2xl neon-red">×</span>
+                            </button>
+                        </div>
+                    </div>
                     <form @submit.prevent="submitForm" class="">
                         <div class="mb-6">
                             <label for="url" class="mb-2 block text-md font-medium neon-green">Enter URL that's preventing access here:</label>
@@ -33,10 +57,10 @@
 
                         <button
                             type="submit"
-                            :disabled="isLoading"
-                            class="w-full rounded-md zombie-button px-4 py-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                            :disabled="isSubmitLoading"
+                            class="cursor-pointer w-full rounded-md zombie-button px-4 py-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                        <span v-if="isLoading" class="flex items-center justify-center">
+                        <span v-if="isSubmitLoading" class="flex items-center justify-center">
                             <svg
                                 class="mr-3 -ml-1 h-5 w-5 animate-spin text-white"
                                 xmlns="http://www.w3.org/2000/svg"
@@ -56,46 +80,20 @@
                         </button>
                     </form>
                     <div class="mt-6 text-center">
-                        <p class="mb-4 text-sm neon-red font-medium">⚠️ EMERGENCY ZOMBIE BREACH PROTOCOL ⚠️</p>
+                        <p class="mb-4 text-sm neon-red font-medium">⚠️ CLICK SKULL TO DISABLE PIHOLE ⚠️</p>
                         <form @submit.prevent="disablePi" class="flex justify-center">
                             <button
                                 type="submit"
-                                :disabled="isLoading"
-                                class="skull-button focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 flex items-center justify-center"
+                                :disabled="isDisablePiLoading"
+                                class="cursor-pointer skull-button focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 flex items-center justify-center"
                                 title="Disable firewall for 5 minutes during zombie breach"
                             >
-                                <span v-if="isLoading" class="skull-icon animate-spin">⚙️</span>
+                                <span v-if="isDisablePiLoading" class="skull-icon animate-spin">⚙️</span>
                                 <span v-else class="skull-icon">☠️</span>
                             </button>
                         </form>
-                        <p class="mt-2 text-xs neon-green">EMERGENCY BREACH PROTOCOL</p>
                     </div>
                 </div>
-
-
-
-                <div v-if="successMessage" class="mt-4 rounded-md survivor-success p-4">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <span class="text-2xl neon-green">✅</span>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm neon-green font-medium">🎯 {{ successMessage }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div v-if="errorMessage" class="mt-4 rounded-md apocalypse-alert p-4">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <span class="text-2xl neon-red">💀</span>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm neon-red font-medium">🚨 {{ errorMessage }}</p>
-                        </div>
-                    </div>
-                </div>
-
                 <div class="mt-6 text-center">
                     <a href="/urllist" class="neon-green hover:neon-red transition-colors duration-300 underline">📡 View Communication Archive</a>
                 </div>
@@ -124,10 +122,12 @@ export default defineComponent({
                 url: '',
             } as FormData,
             errors: {} as Errors,
-            isLoading: false,
+            isSubmitLoading: false,
+            isDisablePiLoading: false,
             successMessage: '',
             errorMessage: '',
             showConfirmationPopup: false,
+            showError: true,
         };
     },
     methods: {
@@ -163,10 +163,10 @@ export default defineComponent({
                 return;
             }
 
-            this.isLoading = true;
+            this.isSubmitLoading = true;
 
             try {
-                const response = await axios.post('/pihole/add-url', {
+                const response = await axios.post('/api/pihole/add-url', {
                     url: this.formData.url,
                 });
 
@@ -176,8 +176,12 @@ export default defineComponent({
                 console.error('Error:', error);
                 this.errorMessage = error.response?.data?.message || 'An error occurred while processing your request.';
             } finally {
-                this.isLoading = false;
+                this.isSubmitLoading = false;
             }
+        },
+
+        closeError() {
+            this.errorMessage = '';
         },
 
         async disablePi(): Promise<void> {
@@ -188,7 +192,7 @@ export default defineComponent({
                 return;
             }
 
-            this.isLoading = true;
+            this.isDisablePiLoading = true;
 
             try {
                 const response = await axios.post('/api/pihole/temporary-disable', {
@@ -201,7 +205,7 @@ export default defineComponent({
                 console.error('Error:', error);
                 this.errorMessage = error.response?.data?.message || 'An error occurred while processing your request.';
             } finally {
-                this.isLoading = false;
+                this.isDisablePiLoading = false;
             }
         },
     },
