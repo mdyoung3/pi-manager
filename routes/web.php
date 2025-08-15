@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\PiholeController;
+use App\Http\Controllers\RegisterController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
 
 Route::get('/', function () {
     return Inertia::render('PiHoleManagementHub');
@@ -23,3 +25,5 @@ Route::prefix('api')->group(function () {
     Route::get('/blocked-urls', [PiholeController::class, 'getBlockedUrls']);
     Route::delete('/blocked-urls/{blockedUrl}', [PiholeController::class, 'destroyBlockedUrl']);
 });
+
+Route::get('register', [RegisterController::class, 'create']);

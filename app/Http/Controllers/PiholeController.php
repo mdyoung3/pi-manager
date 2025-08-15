@@ -65,7 +65,7 @@ class PiholeController extends Controller
             return response()->json(['error' => 'You cannot click more than twice in an hour'], 429); // 429 is Too Many Requests HTTP Status Code
         }
 
-        Cache::put($key, $clicksCount + 1, 10*60);
+        Cache::put($key, $clicksCount + 1, 30*60);
     }
 
     public function submit(Request $request): JsonResponse

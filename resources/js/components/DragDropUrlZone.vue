@@ -25,7 +25,7 @@
                         />
                     </svg>
                     <p class="mb-2 text-lg font-medium text-gray-700">
-                        {{ isDragOver ? 'Drop URL here' : 'Drag URL here to block' }}
+                        {{ isDragOver ? 'Drop URL here' : 'Drag URL here to unblock' }}
                     </p>
                     <p class="text-sm text-gray-500">Or paste a URL manually below</p>
                 </div>
@@ -46,7 +46,7 @@
                         :disabled="isLoading || !manualUrl.trim()"
                         class="rounded-r-md bg-red-600 px-4 py-2 text-white hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                        Block URL
+                        Unblock URL
                     </button>
                 </div>
             </div>
